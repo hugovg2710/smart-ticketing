@@ -34,6 +34,13 @@ class Router {
             exit;
         }
 
+        // CSRF: todas las peticiones POST deben llevar un token válido
+        if ($method === 'POST' && !Csrf::verify()) {
+            http_response_code(403);
+            require __DIR__ . '/../Views/errors/403.php';
+            exit;
+        }
+
         // 1. Check exact match first (backward compatible)
         if (array_key_exists($uri, $this->routes[$method] ?? [])) {
             $action = $this->routes[$method][$uri];

@@ -53,6 +53,7 @@
                     </span>
 
                     <form method="POST" action="/tickets/<?= (int) $ticket['id'] ?>/status" class="m-0">
+                        <?= \App\Core\Csrf::field() ?>
                         <?php if ($ticket['status'] !== 'Resuelto'): ?>
                             <input type="hidden" name="status" value="Resuelto">
                             <button type="submit" class="btn btn-success btn-sm">
@@ -145,6 +146,7 @@
                             <?php if ($index === $lastSuggestionIndex): ?>
                                 <!-- Formulario editable en el último mensaje con IA -->
                                 <form method="POST" action="/tickets/<?= (int) $ticket['id'] ?>/reply" onsubmit="var b=this.querySelector('button[type=submit]');b.disabled=true;b.innerHTML='<i class=\'bi bi-send me-1\'></i>Enviando...';">
+                                    <?= \App\Core\Csrf::field() ?>
                                     <label for="reply_body" class="form-label text-muted mb-1" style="font-size: 0.85rem;">
                                         <i class="bi bi-send me-1"></i>Respuesta sugerida — editable y lista para enviar:
                                     </label>
@@ -180,6 +182,7 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="/tickets/<?= (int) $ticket['id'] ?>/reply" onsubmit="var b=this.querySelector('button[type=submit]');b.disabled=true;b.innerHTML='<i class=\'bi bi-send me-1\'></i>Enviando...';">
+                    <?= \App\Core\Csrf::field() ?>
                     <textarea
                         name="reply_body"
                         class="form-control mb-2"
@@ -263,6 +266,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <form method="POST" action="/tickets/<?= (int) $ticket['id'] ?>/delete" class="d-inline">
+                    <?= \App\Core\Csrf::field() ?>
                     <button type="submit" class="btn btn-danger">
                         <i class="bi bi-trash me-1"></i>Eliminar
                     </button>
