@@ -12,6 +12,7 @@
     <div class="d-flex align-items-center gap-2">
         <span class="badge bg-secondary fs-6"><?= count($tickets) ?> tickets</span>
         <form method="POST" action="/ingest/sync" class="d-inline" onsubmit="var b=this.querySelector('button[type=submit]');b.disabled=true;b.innerHTML='<i class=\'bi bi-arrow-repeat me-1\'></i>Sincronizando...';b.classList.replace('btn-success','btn-secondary');">
+            <?= \App\Core\Csrf::field() ?>
             <button type="submit" class="btn btn-success btn-sm">
                 <i class="bi bi-arrow-repeat me-1"></i>Sincronizar correos
             </button>
@@ -250,6 +251,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <form method="POST" action="/tickets/<?= $ticket['id'] ?>/delete" class="d-inline">
+                            <?= \App\Core\Csrf::field() ?>
                             <button type="submit" class="btn btn-danger">
                                 <i class="bi bi-trash me-1"></i>Eliminar
                             </button>

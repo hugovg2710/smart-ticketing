@@ -16,6 +16,7 @@
                 <?php endif; ?>
 
                 <form action="/login" method="POST">
+                    <?= \App\Core\Csrf::field() ?>
                     <div class="mb-3">
                         <label for="email" class="form-label fw-semibold">Correo Electrónico</label>
                         <div class="input-group">

@@ -1,66 +1,70 @@
 <?php
+/**
+ * Crea (o informa de que ya existe) el usuario administrador.
+ *
+ * Uso (desde la raíz del proyecto):
+ *   docker compose exec app php src/create_admin.php
+ *
+ * Los datos se leen de .env (ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD).
+ * Si ADMIN_PASSWORD está vacío se genera una contraseña aleatoria que se muestra una sola vez.
+ * Solo puede ejecutarse desde la línea de comandos (CLI).
+ */
+
+if (php_sapi_name() !== 'cli') {
+    http_response_code(404);
+    exit;
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 use App\Core\Database;
 
-// Cargar variables de entorno
-$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+Dotenv::createImmutable(__DIR__ . '/../')->safeLoad();
 
-/**
- * Script para inicializar un usuario administrador.
- * ADVERTENCIA: Este archivo debe eliminarse o protegerse en producción.
- * Solo puede ejecutarse desde consola (CLI). 
- */
+$adminName     = $_ENV['ADMIN_NAME'] ?? 'Administrador';
+$adminEmail    = $_ENV['ADMIN_EMAIL'] ?? '';
+$adminPassword = $_ENV['ADMIN_PASSWORD'] ?? '';
+$generated     = false;
 
-if (php_sapi_name() !== 'cli') {
-    die("Error: Este script solo puede ser ejecutado desde la línea de comandos (CLI).\n");
+if (!filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+    fwrite(STDERR, "Error: define un ADMIN_EMAIL válido en .env\n");
+    exit(1);
 }
 
-echo "Inicializando sistema de autenticación...\n";
-
-// Datos del administrador por defecto
-$adminName = 'Administrador Principal';
-$adminEmail = 'admin@electrotech.com';
-$adminPassword = 'password123'; // Cambiar en producción
-$role = 'admin';
+if ($adminPassword === '') {
+    $adminPassword = bin2hex(random_bytes(8));
+    $generated = true;
+} elseif (strlen($adminPassword) < 8) {
+    fwrite(STDERR, "Error: ADMIN_PASSWORD debe tener al menos 8 caracteres.\n");
+    exit(1);
+}
 
 try {
     $db = Database::getInstance()->getConnection();
-    
-    // Verificar si el usuario ya existe
+
     $stmt = $db->prepare('SELECT id FROM users WHERE email = :email');
     $stmt->execute(['email' => $adminEmail]);
     if ($stmt->fetch()) {
-        echo "El usuario administrador ya existe en la base de datos con el email $adminEmail.\n";
-        exit;
+        echo "El usuario {$adminEmail} ya existe. No se ha modificado.\n";
+        exit(0);
     }
 
-    // Insertar el usuario con password cifrado
-    $passwordHash = password_hash($adminPassword, PASSWORD_DEFAULT);
-    
-    $stmtInsert = $db->prepare('
-        INSERT INTO users (name, email, password_hash, role) 
-        VALUES (:name, :email, :password_hash, :role)
-    ');
-    
-    $success = $stmtInsert->execute([
-        'name' => $adminName,
-        'email' => $adminEmail,
-        'password_hash' => $passwordHash,
-        'role' => $role
+    $stmt = $db->prepare(
+        'INSERT INTO users (name, email, password_hash, role) VALUES (:name, :email, :password_hash, :role)'
+    );
+    $stmt->execute([
+        'name'          => $adminName,
+        'email'         => $adminEmail,
+        'password_hash' => password_hash($adminPassword, PASSWORD_DEFAULT),
+        'role'          => 'admin',
     ]);
 
-    if ($success) {
-        echo "Usuario administrador creado exitosamente:\n";
-        echo " - Email: $adminEmail\n";
-        echo " - Contraseña: $adminPassword\n";
-        echo "Por favor, elimina este script después de su uso.\n";
-    } else {
-        echo "Hubo un problema intentando crear el administrador.\n";
+    echo "Administrador creado: {$adminEmail}\n";
+    if ($generated) {
+        echo "Contraseña generada (guárdala, no se volverá a mostrar): {$adminPassword}\n";
     }
-
 } catch (Exception $e) {
-    echo "Error al conectar o insertar en la BBDD: " . $e->getMessage() . "\n";
+    fwrite(STDERR, 'Error al conectar o insertar en la BBDD: ' . $e->getMessage() . "\n");
+    exit(1);
 }

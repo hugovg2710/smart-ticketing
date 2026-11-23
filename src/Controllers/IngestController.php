@@ -28,7 +28,7 @@ class IngestController extends Controller {
             if ($gmailService->getClient()->isAccessTokenExpired() && !$gmailService->getClient()->getRefreshToken()) {
                 $this->json([
                     'status' => 'error',
-                    'message' => 'Gmail not authenticated. Visit /gmail/auth first.'
+                    'message' => 'Gmail not authenticated. Connect Gmail from /settings first.'
                 ], 401);
                 return;
             }
